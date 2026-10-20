@@ -1,0 +1,11 @@
+{
+  "name": "Taxi Local",
+  "short_name": "Taxi Local",
+  "description": "Solicita un taxi y gestiona reservas de conductores.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f4f4f1",
+  "theme_color": "#e8bc32",
+  "icons": []
+}

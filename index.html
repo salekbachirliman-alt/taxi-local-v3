@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#e8bc32">
+  <meta name="description" content="Taxi Local: solicita un taxi o accede como conductor.">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="stylesheet" href="./styles.css">
+  <title>Taxi Local</title>
+</head>
+<body>
+  <header class="brand">
+    <div class="brand-mark" aria-hidden="true">🚕</div>
+    <div><h1>TAXI LOCAL</h1><p>Tu taxi, más cerca.</p></div>
+  </header>
+
+  <main id="app" class="app-shell">
+    <section id="home-screen" class="screen active">
+      <button class="primary big-action" data-screen="request-screen"><span class="action-icon">＋</span><span><strong>PEDIR TAXI</strong><small>Encuentra conductores disponibles</small></span></button>
+      <button class="secondary big-action" data-screen="driver-screen"><span class="action-icon">◉</span><span><strong>SOY CONDUCTOR</strong><small>Accede a tu cuenta profesional</small></span></button>
+      <div class="admin-entry"><span>¿Eres administrador?</span><button class="text-button" data-screen="admin-screen">Acceso de administración</button></div>
+    </section>
+
+    <section id="request-screen" class="screen">
+      <button class="back-button" data-screen="home-screen">← Inicio</button>
+      <h2>Solicitar un taxi</h2>
+      <p class="muted">No necesitas crear una cuenta.</p>
+      <form id="request-form" class="panel">
+        <label>Ubicación de recogida</label>
+        <button type="button" class="outline full" id="locate-button">◎ Compartir mi ubicación</button>
+        <p id="location-status" class="hint">Puedes permitir el acceso al GPS o indicar la dirección manualmente.</p>
+        <label for="pickup">Dirección o punto de recogida (si no usas GPS)</label>
+        <input id="pickup" name="pickup" autocomplete="street-address" placeholder="Calle, número o lugar">
+        <label for="customer-phone">Número de teléfono</label>
+        <input id="customer-phone" name="phone" type="tel" autocomplete="tel" required placeholder="Tu teléfono">
+        <label for="city">Ciudad/zona de salida</label>
+        <select id="city" name="city" required>
+          <option value="Elda">Elda</option><option value="Petrer">Petrer</option>
+          <option value="Monóvar">Monóvar</option><option value="Alicante">Alicante</option>
+          <option value="Parkings">Parkings</option>
+        </select>
+        <label for="destination">¿A dónde vas?</label>
+        <textarea id="destination" name="destination" required rows="2" placeholder="Escribe la dirección o localidad de destino"></textarea>
+        <button type="submit" class="primary full">Ver conductores y continuar</button>
+      </form>
+      <section class="panel">
+        <h3>Conductores disponibles cerca de ti</h3>
+        <p class="muted">El mapa y la lista de conductores aparecerán aquí cuando la conexión con la base de datos y el proveedor de mapas esté configurada.</p>
+        <div class="map-placeholder"><span>📍</span><strong>Mapa de conductores</strong><small>Se mostrarán conductores activos y opciones para llamarles.</small></div>
+        <div id="drivers-list"></div>
+      </section>
+    </section>
+
+    <section id="driver-screen" class="screen">
+      <button class="back-button" data-screen="home-screen">← Inicio</button>
+      <div class="tabs"><button class="tab active" data-tab="login">Iniciar sesión</button><button class="tab" data-tab="register">Crear cuenta</button></div>
+      <form id="login-form" class="panel driver-tab">
+        <h2>Acceso de conductor</h2>
+        <label for="login-email">Correo electrónico</label><input id="login-email" type="email" autocomplete="email" required placeholder="correo@ejemplo.com">
+        <label for="login-password">Contraseña</label><input id="login-password" type="password" autocomplete="current-password" required>
+        <button class="primary full" type="submit">Iniciar sesión</button>
+        <p class="hint">Solo podrán acceder conductores aprobados por administración.</p>
+      </form>
+      <form id="register-form" class="panel driver-tab hidden">
+        <h2>Crear cuenta de conductor</h2>
+        <label for="full-name">Nombre completo</label><input id="full-name" autocomplete="name" required>
+        <label for="driver-phone">Número de teléfono</label><input id="driver-phone" type="tel" autocomplete="tel" required>
+        <label for="register-email">Correo electrónico</label><input id="register-email" type="email" autocomplete="email" required>
+        <label for="register-password">Contraseña</label><input id="register-password" type="password" minlength="8" autocomplete="new-password" required placeholder="Mín. 8 caracteres">
+        <p class="hint">Debe incluir al menos 8 caracteres, una mayúscula, un número y un símbolo.</p>
+        <label for="driver-city">Ciudad o zona habitual</label>
+        <select id="driver-city" required><option value="Elda">Elda</option><option value="Petrer">Petrer</option><option value="Monóvar">Monóvar</option><option value="Alicante">Alicante</option><option value="Parkings">Parkings</option></select>
+        <button class="primary full" type="submit">Crear cuenta</button>
+      </form>
+    </section>
+
+    <section id="driver-dashboard" class="screen">
+      <button class="back-button" data-screen="home-screen">← Salir del panel</button>
+      <h2>Panel del conductor</h2>
+      <p id="driver-welcome" class="muted">Tus reservas y disponibilidad.</p>
+      <div class="tabs dashboard-tabs"><button class="tab active" data-dash="map">Mapa</button><button class="tab" data-dash="agenda">Agenda</button><button class="tab" data-dash="profile">Perfil</button></div>
+      <div id="dash-map" class="panel"><h3>Reservas disponibles</h3><div class="map-placeholder"><span>📍</span><strong>Mapa de solicitudes</strong><small>Los puntos amarillos representarán las solicitudes abiertas.</small></div><div id="booking-list"><p class="muted">Las reservas aparecerán cuando se configure el backend.</p></div></div>
+      <div id="dash-agenda" class="panel hidden"><h3>Agenda de reservas</h3><p class="muted">Aquí aparecerán tus reservas aceptadas y su estado.</p></div>
+      <div id="dash-profile" class="panel hidden"><h3>Perfil</h3><p id="profile-details" class="muted">Los datos del conductor aparecerán aquí.</p></div>
+    </section>
+
+    <section id="admin-screen" class="screen">
+      <button class="back-button" data-screen="home-screen">← Inicio</button>
+      <h2>Administración</h2>
+      <p class="muted">Acceso reservado. La autorización real debe validarse en Supabase, no solo en esta pantalla.</p>
+      <form id="admin-form" class="panel">
+        <label for="admin-email">Correo electrónico</label><input id="admin-email" type="email" required autocomplete="username">
+        <label for="admin-password">Contraseña</label><input id="admin-password" type="password" required autocomplete="current-password">
+        <button type="submit" class="primary full">Acceder</button>
+      </form>
+      <div id="admin-panel" class="panel hidden"><h3>Panel de administración</h3><p>Cuando esté conectado el backend, aquí podrás aprobar conductores y revisar incidencias.</p></div>
+    </section>
+  </main>
+
+  <nav class="bottom-nav" aria-label="Navegación principal">
+    <button class="nav-item active" data-screen="home-screen"><span>⌂</span><small>Inicio</small></button>
+    <button class="nav-item nav-request" data-screen="request-screen"><span>＋</span><small>Pedir taxi</small></button>
+    <button class="nav-item" data-screen="driver-screen"><span>◉</span><small>Conductores</small></button>
+  </nav>
+  <div id="toast" role="status" aria-live="polite" class="toast hidden"></div>
+  <script src="./config.js"></script>
+  <script src="./app.js"></script>
+</body>
+</html>
