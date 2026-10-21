@@ -17,7 +17,13 @@
     toast.timer = setTimeout(() => el.classList.add("hidden"), 5000);
   }
   function showScreen(id) {
-    $$(".screen").forEach(s => s.classList.toggle("active", s.id === id));
+    $(".screen").forEach(s => s.classList.toggle("active", s.id === id));
+    $(".bottom-nav .nav-item").forEach(item => {
+      const active = item.dataset.screen === id;
+      item.classList.toggle("active", active);
+      if (active) item.setAttribute("aria-current", "page");
+      else item.removeAttribute("aria-current");
+    });
     window.scrollTo({top:0, behavior:"smooth"});
   }
   function friendlyError(error) {
