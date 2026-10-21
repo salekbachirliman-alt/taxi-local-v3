@@ -7,7 +7,7 @@
 window.TAXI_LOCAL_CONFIG = {
   SUPABASE_URL: "https://nhvyjapkzigewxzviobo.supabase.co",
 
-  SUPABASE_ANON_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXMiLCJyZWYiOiJuaHZ5amFwa3ppZ2V3eHp2aW9ibyIsInJvbGUiOiJhbm9uIiwiaWF0IjoxNzkyNDM1NTY1LCJleHAiOjIxMDgwMTE1NjV9.W0uNK13s9urNiRwgNAGUjRU0NQ_-1DnGJgnkfjGkR4s",
+  SUPABASE_ANON_KEY: "sb_publishable_R-T2SEyTnjAcyVLPU_IUuA_7ND7enN9",
 
   MAP_PROVIDER: "openstreetmap",
 
