@@ -55,13 +55,54 @@
 
   $("#locate-button").addEventListener("click", () => {
     const status = $("#location-status");
-    if (!navigator.geolocation) { status.textContent = "Este navegador no permite GPS. Escribe la dirección manualmente."; return; }
-    status.textContent = "Solicitando ubicación…";
-    navigator.geolocation.getCurrentPosition(pos => {
+    const button = $("#locate-button");
+    if (!window.isSecureContext) {
+      status.textContent = "La ubicación solo funciona en una página segura HTTPS. Abre la app desde GitHub Pages.";
+      return;
+    }
+    if (!navigator.geolocation) {
+      status.textContent = "Tu navegador no ofrece ubicación. Comprueba que estás usando Safari o Chrome actualizado y escribe la dirección manualmente.";
+      return;
+    }
+    button.disabled = true;
+    status.textContent = "Buscando tu ubicación… Acepta el permiso del navegador si aparece.";
+    navigator.geolocation.getCurrentPosition(async pos => {
       currentPosition = {lat:pos.coords.latitude, lng:pos.coords.longitude};
-      $("#pickup").value = "Mi ubicación actual";
-      status.textContent = "Ubicación obtenida.";
-    }, () => { status.textContent = "No se pudo obtener el GPS. Puedes escribir la dirección manualmente."; }, {enableHighAccuracy:true, timeout:12000, maximumAge:30000});
+      const lat = currentPosition.lat;
+      const lng = currentPosition.lng;
+      $("#pickup").value = lat.toFixed(6) + ", " + lng.toFixed(6);
+      status.textContent = "Ubicación encontrada. Buscando la dirección…";
+      try {
+        const url = "https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=" + encodeURIComponent(lat) + "&lon=" + encodeURIComponent(lng) + "&zoom=18&addressdetails=1";
+        const response = await fetch(url, {headers:{"Accept":"application/json"}});
+        if (response.ok) {
+          const data = await response.json();
+          if (data.display_name) {
+            $("#pickup").value = data.display_name;
+            status.textContent = "Dirección encontrada. Revísala antes de pedir el taxi.";
+          } else {
+            status.textContent = "Ubicación encontrada, pero no se pudo convertir en dirección. Se usarán las coordenadas.";
+          }
+        } else {
+          status.textContent = "Ubicación encontrada. No se pudo obtener la calle; se usarán las coordenadas.";
+        }
+      } catch (_) {
+        status.textContent = "Ubicación encontrada. No se pudo obtener la calle; se usarán las coordenadas.";
+      } finally {
+        button.disabled = false;
+      }
+    }, error => {
+      button.disabled = false;
+      if (error.code === 1) {
+        status.textContent = "Permiso de ubicación denegado. En iPhone: Ajustes > Privacidad y seguridad > Localización > Safari o el navegador usado; permite el acceso y vuelve a intentarlo.";
+      } else if (error.code === 2) {
+        status.textContent = "El iPhone no pudo determinar la ubicación. Activa Localización y vuelve a intentarlo en exterior.";
+      } else if (error.code === 3) {
+        status.textContent = "La ubicación tardó demasiado. Activa el GPS y vuelve a intentarlo.";
+      } else {
+        status.textContent = "No se pudo obtener la ubicación. Comprueba los permisos del navegador o escribe la dirección manualmente.";
+      }
+    }, {enableHighAccuracy:true, timeout:25000, maximumAge:0});
   });
 
   $("#request-form").addEventListener("submit", async event => {
