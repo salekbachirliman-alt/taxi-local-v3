@@ -1,412 +1,83 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Pedir Taxi Rápidamente</title>
-  
-  <!-- Manifest PWA -->
-  <link rel="manifest" href="data:application/manifest+json,{
-    %22name%22:%22Taxi%20R%C3%A1pido%22,
-    %22short_name%22:%22Taxi%22,
-    %22start_url%22:%22/%22,
-    %22display%22:%22standalone%22,
-    %22background_color%22:%22#FACC15%22,
-    %22theme_color%22:%22#FACC15%22
-  }">
-
-  <!-- Tailwind CSS -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  
-  <!-- Leaflet CSS y JS (Mapas) -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  
-  <!-- Supabase JS Client -->
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#facc15">
+  <title>Taxi Local — Elda y Petrer</title>
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="stylesheet" href="./styles.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  
-  <style>
-    #mapa-cliente, #mapa-conductor { height: 260px; width: 100%; border-radius: 12px; }
-  </style>
+  <script src="./config.js"></script>
+  <script defer src="./app.js"></script>
 </head>
-<body class="bg-gray-100 text-gray-900 min-h-screen flex flex-col items-center justify-between p-4">
-
-  <!-- ENCABEZADO Y NAVEGACIÓN PRINCIPAL -->
-  <header class="w-full max-w-md text-center my-2">
-    <h1 class="text-3xl font-extrabold tracking-tight text-yellow-500 bg-black py-2 rounded-xl shadow-md">🚖 TAXI YA</h1>
+<body>
+  <header class="app-header">
+    <div class="brand">🚕 TAXI LOCAL</div>
+    <p>Elda · Petrer</p>
   </header>
+  <main class="app-main">
+    <section id="home-screen" class="screen active">
+      <h1>¿Qué necesitas?</h1>
+      <button class="primary-button" data-screen="request-screen">🚕 Pedir taxi</button>
+      <button class="secondary-button" data-screen="driver-screen">👨‍✈️ Soy conductor</button>
+      <p class="muted">Servicio piloto · Sin pagos en la app</p>
+    </section>
 
-  <main class="w-full max-w-md flex-1 flex flex-col justify-center">
+    <section id="request-screen" class="screen">
+      <h2>Pedir un taxi</h2>
+      <form id="request-form" class="panel">
+        <label for="city">Localidad</label>
+        <select id="city" required><option>Elda</option><option>Petrer</option></select>
+        <label for="customer-phone">Teléfono de contacto</label>
+        <input id="customer-phone" type="tel" autocomplete="tel" required minlength="6" placeholder="Tu teléfono">
+        <label for="pickup">Punto de recogida</label>
+        <input id="pickup" required maxlength="160" placeholder="Calle y número o usa tu ubicación">
+        <button id="locate-button" type="button" class="secondary-button">📍 Usar mi ubicación</button>
+        <p id="location-status" class="muted" aria-live="polite"></p>
+        <label for="destination">Destino (opcional)</label>
+        <input id="destination" maxlength="160" placeholder="¿Adónde vas?">
+        <label for="passengers">Pasajeros</label>
+        <select id="passengers"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option></select>
+        <label for="ride-notes">Notas (opcional)</label>
+        <textarea id="ride-notes" maxlength="300" placeholder="Equipaje, silla infantil…"></textarea>
+        <button type="submit" class="primary-button">Solicitar taxi</button>
+      </form>
+      <div id="ride-result" class="panel hidden" aria-live="polite"></div>
+      <button class="text-button" data-screen="home-screen">← Volver</button>
+    </section>
 
-    <!-- PANTALLA PRINCIPAL: CLIENTE / TAXISTA / ADMIN -->
-    <div id="vista-inicio" class="space-y-6">
-      <button onclick="mostrarSeccion('vista-pedir-taxi')" class="w-full py-8 text-3xl font-black bg-yellow-400 hover:bg-yellow-500 text-black rounded-2xl shadow-xl transition transform active:scale-95 border-4 border-black">
-        🚖 PEDIR TAXI
-      </button>
-
-      <button onclick="mostrarSeccion('vista-taxista-menu')" class="w-full py-5 text-xl font-bold bg-black hover:bg-gray-800 text-white rounded-2xl shadow-lg transition transform active:scale-95">
-        👨‍✈️ SOY TAXISTA
-      </button>
-
-      <div class="text-center pt-4">
-        <button onclick="mostrarSeccion('vista-admin-login')" class="text-sm font-semibold text-gray-500 hover:underline">
-          Acceso Administrador
-        </button>
+    <section id="driver-screen" class="screen">
+      <h2>Zona de conductores</h2>
+      <div id="auth-panel" class="panel">
+        <div class="tabs">
+          <button type="button" class="tab active" data-tab="login">Iniciar sesión</button>
+          <button type="button" class="tab" data-tab="register">Crear cuenta</button>
+        </div>
+        <form id="login-form">
+          <label for="login-email">Correo electrónico</label><input id="login-email" type="email" autocomplete="email" required>
+          <label for="login-password">Contraseña</label><input id="login-password" type="password" autocomplete="current-password" required>
+          <button class="primary-button" type="submit">Entrar</button>
+        </form>
+        <form id="register-form" class="hidden">
+          <label for="register-name">Nombre completo</label><input id="register-name" required maxlength="100" autocomplete="name">
+          <label for="register-phone">Teléfono</label><input id="register-phone" type="tel" required minlength="6" autocomplete="tel">
+          <label for="register-town">Localidad base</label><select id="register-town"><option>Elda</option><option>Petrer</option></select>
+          <label for="register-email">Correo electrónico</label><input id="register-email" type="email" required autocomplete="email">
+          <label for="register-password">Contraseña (mínimo 8 caracteres)</label><input id="register-password" type="password" required minlength="8" autocomplete="new-password">
+          <button class="primary-button" type="submit">Solicitar alta de conductor</button>
+          <p class="muted">La cuenta de conductor necesita aprobación antes de recibir solicitudes.</p>
+        </form>
       </div>
-    </div>
-
-    <!-- PANTALLA FORMULARIO PEDIR TAXI (CLIENTE) -->
-    <div id="vista-pedir-taxi" class="hidden bg-white p-6 rounded-2xl shadow-xl border border-gray-200 space-y-4">
-      <h2 class="text-2xl font-black text-center">Pedir mi Taxi</h2>
-      
-      <div>
-        <label class="block font-bold text-sm mb-1">Teléfono de contacto:</label>
-        <input type="tel" id="cliente-telefono" placeholder="Ej: 612345678" class="w-full p-3 border-2 border-gray-300 rounded-xl text-lg focus:border-yellow-400 outline-none">
+      <div id="driver-dashboard" class="panel hidden">
+        <div class="dashboard-heading"><div><h3 id="driver-name">Conductor</h3><p id="driver-status" class="muted"></p></div><button id="logout-button" class="text-button" type="button">Salir</button></div>
+        <div id="driver-pending" class="muted"></div>
+        <button id="refresh-rides" type="button" class="secondary-button">Actualizar solicitudes</button>
       </div>
-
-      <div>
-        <label class="block font-bold text-sm mb-1">Dirección de Destino:</label>
-        <input type="text" id="cliente-destino" placeholder="Ej: Estación Central, Calle Principal 12" class="w-full p-3 border-2 border-gray-300 rounded-xl text-lg focus:border-yellow-400 outline-none">
-      </div>
-
-      <button onclick="obtenerUbicacionCliente()" class="w-full py-3 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold rounded-xl border border-blue-300 flex items-center justify-center gap-2">
-        📍 Usar mi ubicación actual
-      </button>
-      <p id="estado-gps" class="text-xs text-gray-500 text-center italic"></p>
-
-      <button onclick="confirmarReservaCliente()" class="w-full py-4 text-xl font-bold bg-yellow-400 hover:bg-yellow-500 text-black rounded-xl shadow-md border-2 border-black">
-        SOLICITAR AHORA
-      </button>
-      
-      <button onclick="mostrarSeccion('vista-inicio')" class="w-full py-2 text-gray-500 font-semibold">
-        Volver
-      </button>
-    </div>
-
-    <!-- PANTALLA RESERVA CONFIRMADA (CLIENTE) -->
-    <div id="vista-reserva-confirmada" class="hidden bg-white p-6 rounded-2xl shadow-xl border border-gray-200 text-center space-y-4">
-      <span class="text-5xl">✅</span>
-      <h2 class="text-2xl font-black">¡Taxi Solicitado!</h2>
-      <p class="text-lg">Tu número de reserva es:</p>
-      <div id="numero-reserva" class="text-4xl font-black text-yellow-600 bg-yellow-100 py-2 rounded-xl border border-yellow-300">#---</div>
-      
-      <p class="text-sm text-gray-600">Taxis activos más cercanos a ti:</p>
-      <div id="mapa-cliente"></div>
-
-      <button onclick="mostrarSeccion('vista-inicio')" class="w-full py-3 bg-black text-white font-bold rounded-xl">
-        Finalizar / Inicio
-      </button>
-    </div>
-
-    <!-- MENÚ TAXISTA (LOGIN / REGISTRO) -->
-    <div id="vista-taxista-menu" class="hidden space-y-4 bg-white p-6 rounded-2xl shadow-xl">
-      <h2 class="text-2xl font-black text-center">Panel de Conductor</h2>
-      
-      <!-- Registro Conductor -->
-      <div id="form-registro-taxista" class="space-y-3">
-        <h3 class="font-bold text-lg text-yellow-600 border-b pb-1">Crear Cuenta</h3>
-        <input type="text" id="taxista-nombre" placeholder="Nombre Completo" class="w-full p-3 border rounded-xl">
-        <input type="tel" id="taxista-telefono" placeholder="Teléfono" class="w-full p-3 border rounded-xl">
-        <input type="email" id="taxista-email" placeholder="Correo Electrónico" class="w-full p-3 border rounded-xl">
-        <input type="password" id="taxista-pass" placeholder="Contraseña segura" class="w-full p-3 border rounded-xl">
-        
-        <button onclick="registrarTaxista()" class="w-full py-3 bg-yellow-400 font-bold rounded-xl border border-black">
-          Registrarme como Taxista
-        </button>
-      </div>
-
-      <!-- Iniciar Sesión Conductor -->
-      <div id="form-login-taxista" class="space-y-3 border-t pt-4">
-        <h3 class="font-bold text-lg text-gray-700">Ya tengo cuenta</h3>
-        <input type="email" id="login-taxista-email" placeholder="Correo Electrónico" class="w-full p-3 border rounded-xl">
-        <input type="password" id="login-taxista-pass" placeholder="Contraseña" class="w-full p-3 border rounded-xl">
-        <button onclick="loginTaxista()" class="w-full py-3 bg-black text-white font-bold rounded-xl">
-          Ingresar
-        </button>
-      </div>
-
-      <button onclick="mostrarSeccion('vista-inicio')" class="w-full py-2 text-gray-500 font-semibold text-center block">
-        Volver
-      </button>
-    </div>
-
-    <!-- PANEL PANEL PANEL CONDUCTOR (PANEL DE PEDIDOS) -->
-    <div id="vista-taxista-panel" class="hidden bg-white p-4 rounded-2xl shadow-xl space-y-4">
-      <div class="flex justify-between items-center border-b pb-2">
-        <h2 class="text-xl font-bold">Solicitudes Disponibles</h2>
-        <button onclick="cerrarSesionTaxista()" class="text-xs bg-red-100 text-red-600 px-2 py-1 rounded-lg">Salir</button>
-      </div>
-
-      <div id="mapa-conductor"></div>
-
-      <div id="lista-reservas" class="space-y-2 max-h-60 overflow-y-auto">
-        <p class="text-sm text-gray-500 text-center">Buscando carreras cercanas...</p>
-      </div>
-    </div>
-
-    <!-- ADMIN LOGIN -->
-    <div id="vista-admin-login" class="hidden bg-white p-6 rounded-2xl shadow-xl space-y-4">
-      <h2 class="text-2xl font-black text-center">Acceso Admin</h2>
-      <input type="password" id="admin-pass" placeholder="Clave de Administrador" class="w-full p-3 border rounded-xl">
-      <button onclick="accederAdmin()" class="w-full py-3 bg-black text-white font-bold rounded-xl">Entrar</button>
-      <button onclick="mostrarSeccion('vista-inicio')" class="w-full py-2 text-gray-500 font-semibold text-center block">Volver</button>
-    </div>
-
-    <!-- PANEL ADMINISTRADOR -->
-    <div id="vista-admin-panel" class="hidden bg-white p-4 rounded-2xl shadow-xl space-y-4">
-      <h2 class="text-xl font-bold border-b pb-2">Gestión de Taxistas</h2>
-      <div id="lista-taxistas-admin" class="space-y-2 max-h-80 overflow-y-auto">
-        <!-- Se llena dinámicamente -->
-      </div>
-      <button onclick="mostrarSeccion('vista-inicio')" class="w-full py-2 bg-gray-200 font-bold rounded-xl">Cerrar Admin</button>
-    </div>
-
+      <button class="text-button" data-screen="home-screen">← Volver</button>
+    </section>
   </main>
-
-  <script>
-    // -----------------------------------------------------------------
-    // REEMPLAZA ESTOS DOS VALORES CON LOS DE TU PROYECTO DE SUPABASE
-    // -----------------------------------------------------------------
-    const SUPABASE_URL = 'TU_SUPABASE_URL';
-    const SUPABASE_KEY = 'TU_SUPABASE_ANON_KEY';
-    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-    // Variables globales de estado
-    let clienteUbicacion = null;
-    let mapaClienteObj = null;
-    let mapaConductorObj = null;
-    let taxistaActual = null;
-
-    // Cambiar vistas fácilmente
-    function mostrarSeccion(idSeccion) {
-      const secciones = ['vista-inicio', 'vista-pedir-taxi', 'vista-reserva-confirmada', 'vista-taxista-menu', 'vista-taxista-panel', 'vista-admin-login', 'vista-admin-panel'];
-      secciones.forEach(id => {
-        document.getElementById(id).classList.add('hidden');
-      });
-      document.getElementById(idSeccion).classList.remove('hidden');
-    }
-
-    // 1. FUNCIONALIDAD CLIENTE
-    function obtenerUbicacionCliente() {
-      const estado = document.getElementById('estado-gps');
-      if (!navigator.geolocation) {
-        estado.textContent = 'La geolocalización no es compatible con este navegador.';
-        return;
-      }
-      estado.textContent = 'Obteniendo GPS...';
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          clienteUbicacion = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-          estado.textContent = '📍 Ubicación detectada con éxito.';
-        },
-        () => {
-          estado.textContent = '⚠️ No se pudo obtener la ubicación. Permite el acceso al GPS.';
-        }
-      );
-    }
-
-    async function confirmarReservaCliente() {
-      const telefono = document.getElementById('cliente-telefono').value;
-      const destino = document.getElementById('cliente-destino').value;
-
-      if (!telefono || !destino || !clienteUbicacion) {
-        alert('Por favor introduce tu teléfono, destino y activa tu ubicación actual.');
-        return;
-      }
-
-      const { data, error } = await supabase
-        .from('reservas_taxi')
-        .insert([{ cliente_telefono: telefono, destino: destino, latitud: clienteUbicacion.lat, longitud: clienteUbicacion.lng }])
-        .select();
-
-      if (error) {
-        alert('Error al procesar la reserva: ' + error.message);
-        return;
-      }
-
-      const reserva = data[0];
-      document.getElementById('numero-reserva').textContent = '#' + reserva.id;
-      mostrarSeccion('vista-reserva-confirmada');
-      inicializarMapaCliente(clienteUbicacion);
-    }
-
-    function inicializarMapaCliente(coords) {
-      if (!mapaClienteObj) {
-        mapaClienteObj = L.map('mapa-cliente').setView([coords.lat, coords.lng], 14);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapaClienteObj);
-      } else {
-        mapaClienteObj.setView([coords.lat, coords.lng], 14);
-      }
-      L.marker([coords.lat, coords.lng]).addTo(mapaClienteObj).bindPopup('Tú estás aquí').openPopup();
-    }
-
-    // 2. FUNCIONALIDAD CONDUCTOR / TAXISTA
-    async function registrarTaxista() {
-      const nombre = document.getElementById('taxista-nombre').value;
-      const telefono = document.getElementById('taxista-telefono').value;
-      const email = document.getElementById('taxista-email').value;
-      const pass = document.getElementById('taxista-pass').value;
-
-      if (!nombre || !telefono || !email || pass.length < 6) {
-        alert('Completa todos los campos. La contraseña debe tener al menos 6 caracteres.');
-        return;
-      }
-
-      const { data, error } = await supabase
-        .from('taxis_conductores')
-        .insert([{ nombre, telefono, email, aprobado: false }]);
-
-      if (error) {
-        alert('Error al registrarse: ' + error.message);
-      } else {
-        alert('Cuenta creada exitosamente. Espera la aprobación de un administrador para operar.');
-        mostrarSeccion('vista-inicio');
-      }
-    }
-
-    async function loginTaxista() {
-      const email = document.getElementById('login-taxista-email').value;
-      
-      const { data, error } = await supabase
-        .from('taxis_conductores')
-        .select('*')
-        .eq('email', email)
-        .single();
-
-      if (error || !data) {
-        alert('No se encontró cuenta asociada a este correo.');
-        return;
-      }
-
-      if (!data.aprobado) {
-        alert('Tu cuenta está pendiente de ser aprobada por el administrador.');
-        return;
-      }
-
-      taxistaActual = data;
-      mostrarSeccion('vista-taxista-panel');
-      iniciarPanelConductor();
-    }
-
-    function cerrarSesionTaxista() {
-      taxistaActual = null;
-      mostrarSeccion('vista-inicio');
-    }
-
-    function iniciarPanelConductor() {
-      if (!mapaConductorObj) {
-        mapaConductorObj = L.map('mapa-conductor').setView([40.4167, -3.7037], 12);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapaConductorObj);
-      }
-
-      cargarReservasPendientes();
-
-      // Escuchar nuevas reservas en tiempo real
-      supabase
-        .channel('schema-db-changes')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'reservas_taxi' }, payload => {
-          cargarReservasPendientes();
-        })
-        .subscribe();
-    }
-
-    async function cargarReservasPendientes() {
-      const { data: reservas, error } = await supabase
-        .from('reservas_taxi')
-        .select('*')
-        .eq('estado', 'pendiente');
-
-      const contenedor = document.getElementById('lista-reservas');
-      contenedor.innerHTML = '';
-
-      if (reservas.length === 0) {
-        contenedor.innerHTML = '<p class="text-sm text-gray-500 text-center">No hay reservas pendientes por ahora.</p>';
-        return;
-      }
-
-      reservas.forEach(r => {
-        const item = document.createElement('div');
-        item.className = 'p-3 border rounded-xl flex justify-between items-center bg-yellow-50';
-        item.innerHTML = `
-          <div>
-            <p class="font-bold">Reserva #${r.id}</p>
-            <p class="text-xs text-gray-600">Destino: ${r.destino}</p>
-            <p class="text-xs text-blue-600 font-bold">Tel: ${r.cliente_telefono}</p>
-          </div>
-          <button onclick="tomarCarrera(${r.id})" class="bg-black text-white text-xs px-3 py-2 rounded-lg font-bold">Aceptar</button>
-        `;
-        contenedor.appendChild(item);
-
-        // Marcador en el mapa
-        L.marker([r.latitud, r.longitud]).addTo(mapaConductorObj)
-          .bindPopup(`<b>Reserva #${r.id}</b><br>Tel: ${r.cliente_telefono}`);
-      });
-    }
-
-    async function tomarCarrera(idReserva) {
-      const { error } = await supabase
-        .from('reservas_taxi')
-        .update({ estado: 'asignada', conductor_id: taxistaActual.id })
-        .eq('id', idReserva);
-
-      if (error) {
-        alert('No se pudo aceptar la carrera o ya fue aceptada por otro conductor.');
-      } else {
-        alert('¡Carrera aceptada! Ya puedes contactar al cliente.');
-        cargarReservasPendientes();
-      }
-    }
-
-    // 3. FUNCIONALIDAD ADMINISTRADOR
-    function accederAdmin() {
-      const pass = document.getElementById('admin-pass').value;
-      if (pass === 'admin123') { // Clave demo
-        mostrarSeccion('vista-admin-panel');
-        cargarTaxistasAdmin();
-      } else {
-        alert('Clave incorrecta.');
-      }
-    }
-
-    async function cargarTaxistasAdmin() {
-      const { data: taxistas, error } = await supabase
-        .from('taxis_conductores')
-        .select('*');
-
-      const contenedor = document.getElementById('lista-taxistas-admin');
-      contenedor.innerHTML = '';
-
-      taxistas.forEach(t => {
-        const item = document.createElement('div');
-        item.className = 'p-3 border rounded-xl flex justify-between items-center bg-gray-50';
-        item.innerHTML = `
-          <div>
-            <p class="font-bold">${t.nombre}</p>
-            <p class="text-xs text-gray-600">${t.email} - ${t.telefono}</p>
-            <span class="text-xs px-2 py-0.5 rounded ${t.aprobado ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}">
-              ${t.aprobado ? 'Aprobado' : 'Pendiente'}
-            </span>
-          </div>
-          <div class="space-x-1">
-            ${!t.aprobado ? `<button onclick="cambiarEstadoTaxista('${t.id}', true)" class="bg-green-600 text-white text-xs px-2 py-1 rounded">Aprobar</button>` : ''}
-            <button onclick="eliminarTaxista('${t.id}')" class="bg-red-600 text-white text-xs px-2 py-1 rounded">Eliminar</button>
-          </div>
-        `;
-        contenedor.appendChild(item);
-      });
-    }
-
-    async function cambiarEstadoTaxista(id, estado) {
-      await supabase.from('taxis_conductores').update({ aprobado: estado }).eq('id', id);
-      cargarTaxistasAdmin();
-    }
-
-    async function eliminarTaxista(id) {
-      if (confirm('¿Seguro que deseas eliminar a este taxista?')) {
-        await supabase.from('taxis_conductores').delete().eq('id', id);
-        cargarTaxistasAdmin();
-      }
-    }
-  </script>
+  <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
+  <footer>Taxi Local · Elda y Petrer</footer>
 </body>
 </html>
