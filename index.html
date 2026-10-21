@@ -18,10 +18,12 @@
   </header>
   <main class="app-main">
     <section id="home-screen" class="screen active">
-      <h1>¿Qué necesitas?</h1>
-      <button class="primary-button" data-screen="request-screen">Pedir taxi</button>
-      <button class="secondary-button" data-screen="driver-screen">Soy conductor</button>
-      <p class="muted">Servicio piloto · Sin pagos en la app</p>
+      <div class="welcome-copy"><span class="eyebrow">ELDA · PETRER</span><h1>Tu taxi,<br>más cerca.</h1><p>Muévete por la ciudad de forma sencilla.</p></div>
+      <div class="home-actions">
+        <button class="primary-button home-action" data-screen="request-screen">Pedir taxi</button>
+        <button class="secondary-button home-action driver-action" data-screen="driver-screen">Soy conductor</button>
+      </div>
+      <p class="muted home-note">Servicio local · Fácil y directo</p>
     </section>
 
     <section id="request-screen" class="screen">
@@ -78,6 +80,11 @@
     </section>
   </main>
   <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
+  <nav class="bottom-nav" aria-label="Navegación principal">
+    <button class="nav-item active" data-screen="home-screen" aria-label="Inicio"><span class="nav-symbol home-symbol"></span><small>Inicio</small></button>
+    <button class="nav-item nav-new" data-screen="request-screen" aria-label="Nueva reserva"><span class="nav-plus">+</span><small>Nueva reserva</small></button>
+    <button class="nav-item" data-screen="driver-screen" aria-label="Usuario"><span class="nav-symbol user-symbol"></span><small>Usuario</small></button>
+  </nav>
   <footer>Taxi Local · Elda y Petrer</footer>
 </body>
 </html>
